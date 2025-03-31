@@ -38,7 +38,7 @@ public class PlantDecayScheduler {
     public void randomDecay() {
         List<Plant> plants = plantRepository.findByIsWitheredFalse();
         Random random = new Random();
-        String[] decayTypes = { "drought", "pest", "coldwave" };
+        String[] decayTypes = { "drought", "pest", "coldwave" };//干旱，害虫，寒潮
 
         for (Plant plant : plants) {
             if (plant.getLastRandomDecayTime() != null &&

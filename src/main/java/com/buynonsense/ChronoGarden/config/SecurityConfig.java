@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/users/login", "/api/users/register").permitAll()
                         // 允许访问植物相关端点
                         .requestMatchers("/api/plants/**").authenticated()
                         .requestMatchers("/api/carerecords/**").authenticated()
