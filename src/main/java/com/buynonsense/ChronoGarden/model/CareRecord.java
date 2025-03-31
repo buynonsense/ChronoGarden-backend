@@ -122,4 +122,12 @@ public class CareRecord {
     public void setGrowthStage(Integer growthStage) {
         this.growthStage = growthStage;
     }
+
+    public void setCreatedTime(LocalDateTime createdTime) {
+        this.timestamp = createdTime;
+    }
+
+    public LocalDateTime getCreatedTime() {
+        return this.timestamp;
+    }
 }

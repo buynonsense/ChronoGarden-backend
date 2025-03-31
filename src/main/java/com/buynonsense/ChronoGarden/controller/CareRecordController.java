@@ -6,6 +6,8 @@ import com.buynonsense.ChronoGarden.model.User;
 import com.buynonsense.ChronoGarden.repository.CareRecordRepository;
 import com.buynonsense.ChronoGarden.repository.PlantRepository;
 import com.buynonsense.ChronoGarden.repository.UserRepository;
+import com.buynonsense.ChronoGarden.service.PlantGrowthService;
+import com.buynonsense.ChronoGarden.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
@@ -28,6 +30,12 @@ public class CareRecordController {
 
     @Autowired
     private PlantRepository plantRepository;
+
+    @Autowired
+    private PlantGrowthService plantGrowthService;
+
+    @Autowired
+    private UserService userService;
 
     // 获取当前用户的所有养护记录
     @GetMapping
@@ -76,32 +84,45 @@ public class CareRecordController {
         // 获取当前用户
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        User user = userRepository.findByUsername(username);
 
-        if (user == null) {
-            return ResponseEntity.badRequest().build();
-        }
+        // 设置用户、时间等信息
+        careRecord.setUser(userService.getUserByUsername(username));
+        careRecord.setCreatedTime(LocalDateTime.now());
 
-        // 验证植物存在
+        // 保存记录
+        CareRecord savedRecord = careRecordRepository.save(careRecord);
+
+        // 如果涉及植物，更新植物状态
         if (careRecord.getPlant() != null && careRecord.getPlant().getId() != null) {
-            return plantRepository.findById(careRecord.getPlant().getId())
-                    .map(plant -> {
-                        careRecord.setUser(user);
-                        careRecord.setPlant(plant);
-                        careRecord.setTimestamp(LocalDateTime.now());
-
-                        CareRecord savedRecord = careRecordRepository.save(careRecord);
-                        return ResponseEntity.ok(savedRecord);
-                    })
-                    .orElse(ResponseEntity.badRequest().build());
+            plantRepository.findById(careRecord.getPlant().getId()).ifPresent(plant -> {
+                // 根据养护操作类型更新植物状态
+                switch (careRecord.getActionType()) {
+                    case "浇水":
+                        plantGrowthService.waterPlant(plant);
+                        break;
+                    case "调整光照":
+                        plantGrowthService.adjustLight(plant);
+                        break;
+                    case "施肥":
+                        plantGrowthService.fertilize(plant);
+                        break;
+                    case "修剪":
+                        plantGrowthService.prunePlant(plant);
+                        break;
+                    case "开始养护":
+                    case "重新养护":
+                        plantGrowthService.startGrowth(plant);
+                        break;
+                }
+            });
         }
 
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.ok(savedRecord);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CareRecord> updateCareRecord(@PathVariable Long id,
-                                                       @RequestBody CareRecord careRecordDetails) {
+            @RequestBody CareRecord careRecordDetails) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         User user = userRepository.findByUsername(username);

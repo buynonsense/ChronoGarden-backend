@@ -1,16 +1,15 @@
 package com.buynonsense.ChronoGarden.controller;
 
 import com.buynonsense.ChronoGarden.model.Plant;
-// 删除不需要的导入
-// import com.buynonsense.ChronoGarden.model.TimeNode;
 import com.buynonsense.ChronoGarden.repository.PlantRepository;
-// 删除不需要的导入
-// import com.buynonsense.ChronoGarden.repository.TimeNodeRepository;
+import com.buynonsense.ChronoGarden.service.PlantGrowthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.time.LocalDateTime;
 
 @RestController
@@ -20,9 +19,8 @@ public class PlantController {
     @Autowired
     private PlantRepository plantRepository;
 
-    // 移除TimeNodeRepository依赖
-    // @Autowired
-    // private TimeNodeRepository timeNodeRepository;
+    @Autowired
+    private PlantGrowthService plantGrowthService;
 
     // 获取所有植物
     @GetMapping
@@ -51,7 +49,6 @@ public class PlantController {
     public ResponseEntity<Plant> createPlant(@RequestBody Plant plant) {
         plant.setCreatedAt(LocalDateTime.now());
         plant.setUpdatedAt(LocalDateTime.now());
-        // 移除TimeNode相关代码
         Plant savedPlant = plantRepository.save(plant);
         return ResponseEntity.ok(savedPlant);
     }
@@ -70,10 +67,9 @@ public class PlantController {
                     plant.setLightNeeds(plantDetails.getLightNeeds());
                     plant.setSoilType(plantDetails.getSoilType());
                     plant.setFertilizationNeeds(plantDetails.getFertilizationNeeds());
+                    plant.setType(plantDetails.getType());
                     plant.setUpdatedAt(LocalDateTime.now());
 
-                    // 移除TimeNode相关代码
-                    // 只保留era字段更新
                     if (plantDetails.getEra() != null) {
                         plant.setEra(plantDetails.getEra());
                     }
@@ -91,6 +87,130 @@ public class PlantController {
                 .map(plant -> {
                     plantRepository.delete(plant);
                     return ResponseEntity.ok().<Void>build();
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // 获取植物生长状态
+    @GetMapping("/{id}/growth-status")
+    public ResponseEntity<Map<String, Object>> getPlantGrowthStatus(@PathVariable Long id) {
+        return plantRepository.findById(id)
+                .map(plant -> {
+                    Map<String, Object> status = new HashMap<>();
+
+                    // 计算生长天数
+                    long growthDays = plantGrowthService.calculateGrowthDays(plant);
+
+                    // 计算健康状态
+                    int healthStatus = plantGrowthService.calculateHealthStatus(plant);
+
+                    status.put("id", plant.getId());
+                    status.put("growthDays", growthDays);
+                    status.put("totalDays", 14); // 总生长周期
+                    status.put("growthStage", plant.getGrowthStage());
+                    status.put("waterLevel", plant.getWaterLevel());
+                    status.put("lightLevel", plant.getLightLevel());
+                    status.put("nutrientLevel", plant.getNutrientLevel());
+                    status.put("healthStatus", healthStatus);
+                    status.put("healthState", getHealthStateName(healthStatus));
+                    status.put("isWithered", plant.getIsWithered());
+                    status.put("isCompleted", plant.getIsCompleted());
+
+                    return ResponseEntity.ok(status);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // 辅助方法：获取健康状态名称
+    private String getHealthStateName(int status) {
+        if (status == 0)
+            return "withered"; // 枯萎
+        if (status <= 30)
+            return "endangered"; // 濒危
+        if (status <= 79)
+            return "normal"; // 正常
+        return "healthy"; // 健康
+    }
+
+    // 开始植物养护
+    @PostMapping("/{id}/start-growth")
+    public ResponseEntity<Plant> startPlantGrowth(@PathVariable Long id) {
+        return plantRepository.findById(id)
+                .map(plant -> {
+                    Plant updatedPlant = plantGrowthService.startGrowth(plant);
+                    return ResponseEntity.ok(updatedPlant);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // 手动执行衰减（开发模式）
+    @PostMapping("/{id}/apply-decay")
+    public ResponseEntity<Plant> applyDecay(@PathVariable Long id, @RequestParam String decayType) {
+        return plantRepository.findById(id)
+                .map(plant -> {
+                    Plant updatedPlant = plantGrowthService.applyDecay(plant, decayType);
+                    return ResponseEntity.ok(updatedPlant);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // 养护操作: 浇水
+    @PostMapping("/{id}/water")
+    public ResponseEntity<?> waterPlant(@PathVariable Long id) {
+        return plantRepository.findById(id)
+                .map(plant -> {
+                    if (plant.getIsWithered()) {
+                        // 当植物枯萎时，仅返回400 + 空body
+                        return ResponseEntity.badRequest().build();
+                    }
+
+                    Plant updatedPlant = plantGrowthService.waterPlant(plant);
+                    return ResponseEntity.ok(updatedPlant);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // 养护操作: 调整光照
+    @PostMapping("/{id}/light")
+    public ResponseEntity<?> adjustLight(@PathVariable Long id) {
+        return plantRepository.findById(id)
+                .map(plant -> {
+                    if (plant.getIsWithered()) {
+                        return ResponseEntity.badRequest().build();
+                    }
+
+                    Plant updatedPlant = plantGrowthService.adjustLight(plant);
+                    return ResponseEntity.ok(updatedPlant);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // 养护操作: 施肥
+    @PostMapping("/{id}/fertilize")
+    public ResponseEntity<?> fertilizePlant(@PathVariable Long id) {
+        return plantRepository.findById(id)
+                .map(plant -> {
+                    if (plant.getIsWithered()) {
+                        return ResponseEntity.badRequest().build();
+                    }
+
+                    Plant updatedPlant = plantGrowthService.fertilize(plant);
+                    return ResponseEntity.ok(updatedPlant);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // 养护操作: 修剪
+    @PostMapping("/{id}/prune")
+    public ResponseEntity<?> prunePlant(@PathVariable Long id) {
+        return plantRepository.findById(id)
+                .map(plant -> {
+                    if (plant.getIsWithered()) {
+                        return ResponseEntity.badRequest().build();
+                    }
+
+                    Plant updatedPlant = plantGrowthService.prunePlant(plant);
+                    return ResponseEntity.ok(updatedPlant);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

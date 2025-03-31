@@ -1,12 +1,15 @@
 package com.buynonsense.ChronoGarden.config;
 
-import com.buynonsense.ChronoGarden.JwtUtil;
 import com.buynonsense.ChronoGarden.filter.JwtAuthenticationFilter;
-import com.buynonsense.ChronoGarden.service.MyUserDetailsService;
+import com.buynonsense.ChronoGarden.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,40 +19,44 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    // 使用 SecurityFilterChain 替代 configure(HttpSecurity) 方法
 
-    private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
-    // 构造注入 JwtUtil 和 UserDetailsService
-    public SecurityConfig(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
-        this.jwtUtil = jwtUtil;
-        this.userDetailsService = userDetailsService;
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtUtil, userDetailsService);
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // 禁用 CSRF
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/users/register", "/api/users/login").permitAll() // 允许注册和登录接口
-                        .requestMatchers("/api/users/protected").authenticated()  // 保护测试端点
-                        .anyRequest().authenticated() // 其他请求需要认证
-                )
-                //将 JwtAuthenticationFilter 添加到过滤链中,确保在 UsernamePasswordAuthenticationFilter 之前运行
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userDetailsService), UsernamePasswordAuthenticationFilter.class);  // 添加 JWT 过滤器
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // 允许访问植物相关端点
+                        .requestMatchers("/api/plants/**").authenticated()
+                        .requestMatchers("/api/carerecords/**").authenticated()
+                        .anyRequest().authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        // 添加JWT过滤器
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
-        // 返回定义的 UserDetailsService 实例
-        return new MyUserDetailsService(); // 自定义的 UserDetailsService
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

@@ -13,38 +13,28 @@ public class Plant {
     private Long id;
 
     private String name;
-
-    @Column(name = "scientific_name")
     private String scientificName;
-
-    @Column(name = "original_name")
     private String originalName;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // 使用era字段代替TimeNode关联
     private String era;
-
-    @Column(name = "first_appearance")
     private String firstAppearance;
-
-    @Column(name = "extinction_time")
     private String extinctionTime;
-
     private String source;
 
-    @Column(name = "crawl_time")
-    private String crawlTime;
+    @Column(columnDefinition = "TEXT")
+    private String careGuide;
 
-    @Column(name = "source_language")
-    private String sourceLanguage;
-
-    @Column(name = "care_needs", columnDefinition = "json")
-    private String careNeeds;
-
-    @Column(name = "growth_stages", columnDefinition = "json")
+    @Column(columnDefinition = "TEXT")
     private String growthStages;
+
+    private String waterNeeds;
+    private String lightNeeds;
+    private String soilType;
+    private String fertilizationNeeds;
+    private String type;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -52,12 +42,33 @@ public class Plant {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // 为了兼容现有代码，添加这些属性
-    private String waterNeeds;
-    private String lightNeeds;
-    private String soilType;
-    private String fertilizationNeeds;
-    private String careGuide;
+    @Column(name = "growth_start_time")
+    private LocalDateTime growthStartTime;
+
+    @Column(name = "water_level")
+    private Integer waterLevel = 70;
+
+    @Column(name = "light_level")
+    private Integer lightLevel = 70;
+
+    @Column(name = "nutrient_level")
+    private Integer nutrientLevel = 70;
+
+    @Column(name = "growth_stage")
+    private String growthStage = "seed"; // seed, sprout, flower, fruit
+
+    @Column(name = "is_completed")
+    private Boolean isCompleted = false;
+
+    @Column(name = "is_withered")
+    private Boolean isWithered = false;
+
+    // 衰减上次发生时间
+    @Column(name = "last_normal_decay_time")
+    private LocalDateTime lastNormalDecayTime;
+
+    @Column(name = "last_random_decay_time")
+    private LocalDateTime lastRandomDecayTime;
 
     // Getters and Setters
     public Long getId() {
@@ -132,28 +143,12 @@ public class Plant {
         this.source = source;
     }
 
-    public String getCrawlTime() {
-        return crawlTime;
+    public String getCareGuide() {
+        return careGuide;
     }
 
-    public void setCrawlTime(String crawlTime) {
-        this.crawlTime = crawlTime;
-    }
-
-    public String getSourceLanguage() {
-        return sourceLanguage;
-    }
-
-    public void setSourceLanguage(String sourceLanguage) {
-        this.sourceLanguage = sourceLanguage;
-    }
-
-    public String getCareNeeds() {
-        return careNeeds;
-    }
-
-    public void setCareNeeds(String careNeeds) {
-        this.careNeeds = careNeeds;
+    public void setCareGuide(String careGuide) {
+        this.careGuide = careGuide;
     }
 
     public String getGrowthStages() {
@@ -162,22 +157,6 @@ public class Plant {
 
     public void setGrowthStages(String growthStages) {
         this.growthStages = growthStages;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public String getWaterNeeds() {
@@ -212,11 +191,99 @@ public class Plant {
         this.fertilizationNeeds = fertilizationNeeds;
     }
 
-    public String getCareGuide() {
-        return careGuide;
+    public String getType() {
+        return type;
     }
 
-    public void setCareGuide(String careGuide) {
-        this.careGuide = careGuide;
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getGrowthStartTime() {
+        return growthStartTime;
+    }
+
+    public void setGrowthStartTime(LocalDateTime growthStartTime) {
+        this.growthStartTime = growthStartTime;
+    }
+
+    public Integer getWaterLevel() {
+        return waterLevel;
+    }
+
+    public void setWaterLevel(Integer waterLevel) {
+        this.waterLevel = waterLevel;
+    }
+
+    public Integer getLightLevel() {
+        return lightLevel;
+    }
+
+    public void setLightLevel(Integer lightLevel) {
+        this.lightLevel = lightLevel;
+    }
+
+    public Integer getNutrientLevel() {
+        return nutrientLevel;
+    }
+
+    public void setNutrientLevel(Integer nutrientLevel) {
+        this.nutrientLevel = nutrientLevel;
+    }
+
+    public String getGrowthStage() {
+        return growthStage;
+    }
+
+    public void setGrowthStage(String growthStage) {
+        this.growthStage = growthStage;
+    }
+
+    public Boolean getIsCompleted() {
+        return isCompleted;
+    }
+
+    public void setIsCompleted(Boolean isCompleted) {
+        this.isCompleted = isCompleted;
+    }
+
+    public Boolean getIsWithered() {
+        return isWithered;
+    }
+
+    public void setIsWithered(Boolean isWithered) {
+        this.isWithered = isWithered;
+    }
+
+    public LocalDateTime getLastNormalDecayTime() {
+        return lastNormalDecayTime;
+    }
+
+    public void setLastNormalDecayTime(LocalDateTime lastNormalDecayTime) {
+        this.lastNormalDecayTime = lastNormalDecayTime;
+    }
+
+    public LocalDateTime getLastRandomDecayTime() {
+        return lastRandomDecayTime;
+    }
+
+    public void setLastRandomDecayTime(LocalDateTime lastRandomDecayTime) {
+        this.lastRandomDecayTime = lastRandomDecayTime;
     }
 }

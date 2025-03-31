@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface PlantRepository extends JpaRepository<Plant, Long> {
     List<Plant> findByEra(String era);
+
+    // 添加获取非枯萎植物的方法
+    List<Plant> findByIsWitheredFalse();
 }
