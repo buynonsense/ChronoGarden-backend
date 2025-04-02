@@ -3,8 +3,13 @@ package com.buynonsense.ChronoGarden.controller;
 import com.buynonsense.ChronoGarden.model.Plant;
 import com.buynonsense.ChronoGarden.repository.PlantRepository;
 import com.buynonsense.ChronoGarden.service.PlantGrowthService;
+import com.buynonsense.ChronoGarden.model.User;
+import com.buynonsense.ChronoGarden.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +26,9 @@ public class PlantController {
 
     @Autowired
     private PlantGrowthService plantGrowthService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // 获取所有植物
     @GetMapping
@@ -213,5 +221,98 @@ public class PlantController {
                     return ResponseEntity.ok(updatedPlant);
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    // 获取用户已领养的植物
+    @GetMapping("/user/adopted")
+    public ResponseEntity<List<Plant>> getUserAdoptedPlants() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            // 获取当前用户
+            User user = userRepository.findByUsername(username);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            // 获取用户已领养的植物
+            List<Plant> adoptedPlants = plantRepository.findByAdoptedByUserId(user.getId());
+            return ResponseEntity.ok(adoptedPlants);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 领养植物
+    @PostMapping("/{id}/adopt")
+    public ResponseEntity<Plant> adoptPlant(@PathVariable Long id) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            // 获取当前用户
+            User user = userRepository.findByUsername(username);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).<Plant>build();
+            }
+
+            return plantRepository.findById(id)
+                    .map(plant -> {
+                        // 如果植物已经被领养，返回错误
+                        if (plant.getAdoptedByUserId() != null) {
+                            return ResponseEntity.status(HttpStatus.CONFLICT)
+                                    .<Plant>build(); // 显式指定类型为 Plant
+                        }
+
+                        // 将植物与用户关联，设置初始值并启动生长
+                        plant.setAdoptedByUserId(user.getId());
+                        plant = plantGrowthService.startGrowth(plant);
+
+                        return ResponseEntity.ok(plant);
+                    })
+                    .orElse(ResponseEntity.notFound().<Plant>build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).<Plant>build();
+        }
+    }
+
+    /**
+     * 收获植物
+     */
+    @PostMapping("/{id}/harvest")
+    public ResponseEntity<Plant> harvestPlant(@PathVariable Long id) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            // 获取当前用户
+            User user = userRepository.findByUsername(username);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).<Plant>build();
+            }
+
+            return plantRepository.findById(id)
+                    .map(plant -> {
+                        // 验证植物归属
+                        if (!user.getId().equals(plant.getAdoptedByUserId())) {
+                            return ResponseEntity.status(HttpStatus.FORBIDDEN).<Plant>build();
+                        }
+
+                        // 验证是否处于结果期
+                        if (!"fruit".equals(plant.getGrowthStage())) {
+                            return ResponseEntity.status(HttpStatus.BAD_REQUEST).<Plant>build();
+                        }
+
+                        // 设置为已完成状态
+                        plant.setIsCompleted(true);
+                        plant = plantRepository.save(plant);
+
+                        return ResponseEntity.ok(plant);
+                    })
+                    .orElse(ResponseEntity.notFound().<Plant>build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).<Plant>build();
+        }
     }
 }

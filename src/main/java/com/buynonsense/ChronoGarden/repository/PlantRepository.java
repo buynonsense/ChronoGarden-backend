@@ -12,4 +12,7 @@ public interface PlantRepository extends JpaRepository<Plant, Long> {
 
     // 添加获取非枯萎植物的方法
     List<Plant> findByIsWitheredFalse();
+
+    // 添加获取用户已领养植物的方法
+    List<Plant> findByAdoptedByUserId(Long userId);
 }

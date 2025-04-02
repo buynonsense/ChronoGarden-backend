@@ -70,6 +70,27 @@ public class Plant {
     @Column(name = "last_random_decay_time")
     private LocalDateTime lastRandomDecayTime;
 
+    @Column(name = "adopted_by_user_id")
+    private Long adoptedByUserId;
+
+    @Column(name = "last_watered_time")
+    private LocalDateTime lastWateredTime;
+
+    @Column(name = "last_light_adjustment_time")
+    private LocalDateTime lastLightAdjustmentTime;
+
+    @Column(name = "last_fertilized_time")
+    private LocalDateTime lastFertilizedTime;
+
+    @Column(name = "last_pruned_time")
+    private LocalDateTime lastPrunedTime;
+
+    @Column(name = "last_updated_time")
+    private LocalDateTime lastUpdatedTime;
+
+    @Column(name = "fruit_time")
+    private LocalDateTime fruitTime;
+
     // Getters and Setters
     public Long getId() {
         return id;
@@ -285,5 +306,65 @@ public class Plant {
 
     public void setLastRandomDecayTime(LocalDateTime lastRandomDecayTime) {
         this.lastRandomDecayTime = lastRandomDecayTime;
+    }
+
+    public Long getAdoptedByUserId() {
+        return adoptedByUserId;
+    }
+
+    public void setAdoptedByUserId(Long adoptedByUserId) {
+        this.adoptedByUserId = adoptedByUserId;
+    }
+
+    public void setGrowthStartDate(LocalDateTime date) {
+        this.growthStartTime = date; // 使用已有的growthStartTime字段
+    }
+
+    public LocalDateTime getLastWateredTime() {
+        return lastWateredTime;
+    }
+
+    public void setLastWateredTime(LocalDateTime lastWateredTime) {
+        this.lastWateredTime = lastWateredTime;
+    }
+
+    public LocalDateTime getLastLightAdjustmentTime() {
+        return lastLightAdjustmentTime;
+    }
+
+    public void setLastLightAdjustmentTime(LocalDateTime lastLightAdjustmentTime) {
+        this.lastLightAdjustmentTime = lastLightAdjustmentTime;
+    }
+
+    public LocalDateTime getLastFertilizedTime() {
+        return lastFertilizedTime;
+    }
+
+    public void setLastFertilizedTime(LocalDateTime lastFertilizedTime) {
+        this.lastFertilizedTime = lastFertilizedTime;
+    }
+
+    public LocalDateTime getLastPrunedTime() {
+        return lastPrunedTime;
+    }
+
+    public void setLastPrunedTime(LocalDateTime lastPrunedTime) {
+        this.lastPrunedTime = lastPrunedTime;
+    }
+
+    public LocalDateTime getLastUpdatedTime() {
+        return lastUpdatedTime;
+    }
+
+    public void setLastUpdatedTime(LocalDateTime lastUpdatedTime) {
+        this.lastUpdatedTime = lastUpdatedTime;
+    }
+
+    public LocalDateTime getFruitTime() {
+        return fruitTime;
+    }
+
+    public void setFruitTime(LocalDateTime fruitTime) {
+        this.fruitTime = fruitTime;
     }
 }
