@@ -229,4 +229,53 @@ public class PlantGrowthService {
         plant.setNutrientLevel(Math.min(100, plant.getNutrientLevel() + 20));
         return updatePlantGrowthState(plant);
     }
+
+    /**
+     * 快进植物时间（仅用于开发测试）
+     */
+    public Plant advanceTime(Plant plant, int hours) {
+        // 获取原始的时间
+        LocalDateTime now = LocalDateTime.now();
+
+        // 计算生长天数
+        long currentGrowthDays = calculateGrowthDays(plant);
+
+        // 计算要添加的天数
+        int daysToAdd = hours / 24;
+
+        // 更新生长天数
+        long newGrowthDays = Math.min(14, currentGrowthDays + daysToAdd); // 14天是总周期
+
+        // 更新植物生长阶段
+        String newStage = getGrowthStageByDays(newGrowthDays);
+        plant.setGrowthStage(newStage);
+
+        // 设置生长开始时间为当前时间减去新的生长天数
+        if (plant.getGrowthStartTime() != null) {
+            plant.setGrowthStartTime(LocalDateTime.now().minusDays(newGrowthDays));
+        }
+
+        // 保存植物
+        plant = plantRepository.save(plant);
+
+        // 根据快进的小时数模拟衰减
+        int normalDecayTimes = hours / 12; // 每12小时一次正常衰减
+        int randomDecayTimes = hours / 24; // 每24小时一次随机衰减
+
+        // 应用正常衰减
+        for (int i = 0; i < normalDecayTimes; i++) {
+            plant = applyDecay(plant, "normal");
+        }
+
+        // 应用随机衰减
+        if (randomDecayTimes > 0) {
+            String[] decayTypes = { "drought", "pest", "coldwave" };
+            Random random = new Random();
+            String decayType = decayTypes[random.nextInt(decayTypes.length)];
+            plant = applyDecay(plant, decayType);
+        }
+
+        // 更新植物生长状态
+        return updatePlantGrowthState(plant);
+    }
 }

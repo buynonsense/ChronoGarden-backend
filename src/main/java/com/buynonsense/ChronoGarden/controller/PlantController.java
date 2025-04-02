@@ -5,16 +5,20 @@ import com.buynonsense.ChronoGarden.repository.PlantRepository;
 import com.buynonsense.ChronoGarden.service.PlantGrowthService;
 import com.buynonsense.ChronoGarden.model.User;
 import com.buynonsense.ChronoGarden.repository.UserRepository;
+import com.buynonsense.ChronoGarden.model.CareRecord;
+import com.buynonsense.ChronoGarden.repository.CareRecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.time.LocalDateTime;
 
 @RestController
@@ -29,6 +33,9 @@ public class PlantController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CareRecordRepository careRecordRepository;
 
     // 获取所有植物
     @GetMapping
@@ -313,6 +320,91 @@ public class PlantController {
                     .orElse(ResponseEntity.notFound().<Plant>build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).<Plant>build();
+        }
+    }
+
+    @PostMapping("/{id}/advance-time")
+    public ResponseEntity<Plant> advanceTime(@PathVariable Long id, @RequestParam int hours) {
+        // 移除环境检查，允许在任何环境使用
+        // 注意：这可能会在生产环境中造成安全风险
+
+        try {
+            Plant plant = plantRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("植物不存在"));
+
+            // 快进植物时间
+            plant = plantGrowthService.advanceTime(plant, hours);
+
+            return ResponseEntity.ok(plant);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).<Plant>build();
+        }
+    }
+
+    /**
+     * 获取用户需要关注的植物（水分/光照/养分任一低于30的植物）
+     */
+    @GetMapping("/user/needing-care")
+    public ResponseEntity<List<Map<String, Object>>> getPlantsNeedingCare() {
+        
+        // 添加调试日志查看方法是否被调用
+        System.out.println("访问了 getPlantsNeedingCare 方法");
+
+        try {
+            // 获取当前登录用户
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            User user = userRepository.findByUsername(username);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            // 获取用户所有植物
+            List<Plant> userPlants = plantRepository.findByAdoptedByUserId(user.getId());
+            List<Map<String, Object>> plantsNeedingCare = new ArrayList<>();
+
+            // 遍历所有植物，找出需要关注的植物
+            for (Plant plant : userPlants) {
+                // 仅处理未完成且未枯萎的植物
+                if (!plant.getIsCompleted() && !plant.getIsWithered()) {
+                    // 检查水分、光照、养分是否低于30
+                    if (plant.getWaterLevel() < 30 || plant.getLightLevel() < 30 || plant.getNutrientLevel() < 30) {
+                        Map<String, Object> plantInfo = new HashMap<>();
+
+                        // 基本信息
+                        plantInfo.put("id", plant.getId());
+                        plantInfo.put("name", plant.getName());
+
+                        // 确定需要关注的原因
+                        List<String> reasons = new ArrayList<>();
+                        if (plant.getWaterLevel() < 30)
+                            reasons.add("缺水");
+                        if (plant.getLightLevel() < 30)
+                            reasons.add("缺光");
+                        if (plant.getNutrientLevel() < 30)
+                            reasons.add("缺肥");
+
+                        plantInfo.put("status", String.join("/", reasons));
+
+                        // 获取最后养护时间
+                        List<CareRecord> records = careRecordRepository.findByPlantIdOrderByTimestampDesc(plant.getId(),
+                                PageRequest.of(0, 1));
+
+                        if (!records.isEmpty()) {
+                            plantInfo.put("lastCareDate", records.get(0).getTimestamp());
+                        } else {
+                            plantInfo.put("lastCareDate", null);
+                        }
+
+                        plantsNeedingCare.add(plantInfo);
+                    }
+                }
+            }
+
+            return ResponseEntity.ok(plantsNeedingCare);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

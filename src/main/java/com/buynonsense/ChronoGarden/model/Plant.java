@@ -91,6 +91,12 @@ public class Plant {
     @Column(name = "fruit_time")
     private LocalDateTime fruitTime;
 
+    @Column(name = "growth_days")
+    private Integer growthDays = 0;
+
+    @Column(name = "total_days")
+    private Integer totalDays = 14; // 默认14天完成生长周期
+
     // Getters and Setters
     public Long getId() {
         return id;
@@ -366,5 +372,21 @@ public class Plant {
 
     public void setFruitTime(LocalDateTime fruitTime) {
         this.fruitTime = fruitTime;
+    }
+
+    public Integer getGrowthDays() {
+        return growthDays;
+    }
+
+    public void setGrowthDays(Integer growthDays) {
+        this.growthDays = growthDays;
+    }
+
+    public Integer getTotalDays() {
+        return totalDays;
+    }
+
+    public void setTotalDays(Integer totalDays) {
+        this.totalDays = totalDays;
     }
 }

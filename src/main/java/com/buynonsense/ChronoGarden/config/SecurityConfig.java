@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/login", "/api/users/register").permitAll()
                         // 允许访问植物相关端点
                         .requestMatchers("/api/plants/**").authenticated()
+                        .requestMatchers("/api/plants/user/needing-care").authenticated()
                         .requestMatchers("/api/carerecords/**").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
