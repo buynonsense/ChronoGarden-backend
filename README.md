@@ -1,15 +1,15 @@
-# 时光花园 (ChronoGarden)
+# 时间旅行植物养成模拟器 (ChronoGarden)
 
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?logo=vue.js)](https://vuejs.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-6DB33F?logo=spring-boot)](https://spring.io/projects/spring-boot)
 [![Element Plus](https://img.shields.io/badge/Element%20Plus-latest-409EFF?logo=element)](https://element-plus.org/)
 [![ECharts](https://img.shields.io/badge/ECharts-5.x-AA344D?logo=apache-echarts)](https://echarts.apache.org/)
 
-时光花园是一个植物培育模拟系统，让用户可以体验培养珍稀植物的乐趣，通过精心照料使其完成从种子到结果的完整生长周期。
+时间旅行植物养成模拟器是一个植物培育模拟系统，让用户可以体验培养珍稀植物的乐趣，通过精心照料使其完成从种子到结果的完整生长周期。
 
 ## 🌱 项目概述
 
-时光花园模拟了植物生长的自然规律，用户需要通过合理调配水分、光照和养分三项基本要素，应对随机天气事件，让植物健康成长。每种植物都有独特的生长周期和照料需求，成功培育一株植物将获得成就感和虚拟奖励。
+时间旅行植物养成模拟器模拟了植物生长的自然规律，用户需要通过合理调配水分、光照和养分三项基本要素，应对随机天气事件，让植物健康成长。每种植物都有独特的生长周期和照料需求，成功培育一株植物将获得成就感和虚拟奖励。
 
 ## 🌟 核心功能
 
@@ -98,7 +98,7 @@ mvn clean package
 
 ## 📊 数据可视化
 
-时光花园提供基于ECharts的植物状态可视化功能，帮助用户:
+时间旅行植物养成模拟器提供基于ECharts的植物状态可视化功能，帮助用户:
 
 - 监控植物水分、光照、养分随时间的变化趋势
 - 了解不同养护操作对植物状态的影响
@@ -108,7 +108,7 @@ mvn clean package
 ## 🏗️ 系统架构
 
 ```
-时光花园
+时间旅行植物养成模拟器
 ├── 前端 (Vue.js)
 │   ├── 视图组件
 │   │   ├── 植物图鉴
@@ -164,7 +164,7 @@ mvn clean package
 
 ## 🤝 贡献指南
 
-欢迎为时光花园项目做出贡献！您可以通过以下方式参与:
+欢迎为时间旅行植物养成模拟器项目做出贡献！您可以通过以下方式参与:
 
 1. 提交bug报告或功能请求
 2. 审查代码并提出改进建议
@@ -186,4 +186,4 @@ mvn clean package
 
 ---
 
-祝您在时光花园中享受培育珍稀植物的奇妙旅程！🌷
+祝您在时间旅行植物养成模拟器中享受培育珍稀植物的奇妙旅程！🌷
