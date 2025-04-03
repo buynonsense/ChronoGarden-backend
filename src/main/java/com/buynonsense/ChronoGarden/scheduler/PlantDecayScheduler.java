@@ -37,14 +37,12 @@ public class PlantDecayScheduler {
     @Scheduled(fixedRate = 24 * 60 * 60 * 1000)
     public void randomDecay() {
         List<Plant> plants = plantRepository.findByIsWitheredFalse();
-        Random random = new Random();
-        String[] decayTypes = { "drought", "pest", "coldwave" };//干旱，害虫，寒潮
 
         for (Plant plant : plants) {
             if (plant.getLastRandomDecayTime() != null &&
                     ChronoUnit.HOURS.between(plant.getLastRandomDecayTime(), LocalDateTime.now()) >= 24) {
-                String decayType = decayTypes[random.nextInt(decayTypes.length)];
-                plantGrowthService.applyDecay(plant, decayType);
+                // 修正：直接调用applyRandomDecay方法
+                plantGrowthService.applyRandomDecay(plant);
             }
         }
     }

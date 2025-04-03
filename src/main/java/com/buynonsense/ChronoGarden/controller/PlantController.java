@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.time.LocalDateTime;
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/plants")
@@ -414,5 +415,80 @@ public class PlantController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @GetMapping("/{id}/status-history")
+    public ResponseEntity<List<Map<String, Object>>> getPlantStatusHistory(@PathVariable Long id) {
+        return plantRepository.findById(id)
+                .map(plant -> {
+                    List<Map<String, Object>> history = new ArrayList<>();
+
+                    // 当前状态作为第一个数据点
+                    Map<String, Object> current = new HashMap<>();
+                    current.put("timestamp", LocalDateTime.now());
+                    current.put("waterLevel", plant.getWaterLevel());
+                    current.put("lightLevel", plant.getLightLevel());
+                    current.put("nutrientLevel", plant.getNutrientLevel());
+                    current.put("growthStage", plant.getGrowthStage());
+                    history.add(current);
+
+                    // 获取养护记录，用于生成历史数据点
+                    List<CareRecord> records = careRecordRepository.findByPlantIdOrderByTimestampDesc(
+                            plant.getId(), PageRequest.of(0, 10));
+
+                    // 简化：为每个记录创建一个历史数据点
+                    for (CareRecord record : records) {
+                        Map<String, Object> point = new HashMap<>();
+                        point.put("timestamp", record.getTimestamp());
+
+                        // 根据操作类型推算历史状态值
+                        int waterLevel = plant.getWaterLevel();
+                        int lightLevel = plant.getLightLevel();
+                        int nutrientLevel = plant.getNutrientLevel();
+
+                        // 根据记录类型模拟历史值
+                        switch (record.getActionType()) {
+                            case "浇水":
+                                waterLevel = Math.max(0, waterLevel - 30);
+                                break;
+                            case "阳光":
+                                lightLevel = Math.max(0, lightLevel - 30);
+                                break;
+                            case "施肥":
+                                nutrientLevel = Math.max(0, nutrientLevel - 30);
+                                break;
+                            case "修剪":
+                                waterLevel = Math.max(0, waterLevel - 10);
+                                lightLevel = Math.max(0, lightLevel - 15);
+                                nutrientLevel = Math.max(0, nutrientLevel - 20);
+                                break;
+                        }
+
+                        point.put("waterLevel", waterLevel);
+                        point.put("lightLevel", lightLevel);
+                        point.put("nutrientLevel", nutrientLevel);
+                        point.put("growthStage", plant.getGrowthStage());
+
+                        history.add(point);
+                    }
+
+                    // 添加初始点
+                    if (plant.getGrowthStartTime() != null) {
+                        Map<String, Object> initial = new HashMap<>();
+                        initial.put("timestamp", plant.getGrowthStartTime());
+                        initial.put("waterLevel", 70);
+                        initial.put("lightLevel", 70);
+                        initial.put("nutrientLevel", 70);
+                        initial.put("growthStage", "seed");
+                        history.add(initial);
+                    }
+
+                    // 按时间排序
+                    Collections.sort(history, (a, b) -> ((LocalDateTime) a.get("timestamp"))
+                            .compareTo((LocalDateTime) b.get("timestamp")));
+
+                    return ResponseEntity.ok(history);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

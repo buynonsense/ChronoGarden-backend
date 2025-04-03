@@ -4,6 +4,7 @@ import com.buynonsense.ChronoGarden.model.CareRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CareRecordRepository extends JpaRepository<CareRecord, Long> {
@@ -14,4 +15,7 @@ public interface CareRecordRepository extends JpaRepository<CareRecord, Long> {
     List<CareRecord> findByUserIdAndPlantId(Long userId, Long plantId);
 
     List<CareRecord> findByPlantIdOrderByTimestampDesc(Long plantId, Pageable pageable);
+
+    List<CareRecord> findByPlantIdAndTimestampBetweenOrderByTimestampAsc(Long plantId, LocalDateTime startTime,
+            LocalDateTime endTime);
 }
