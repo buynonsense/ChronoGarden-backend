@@ -72,7 +72,7 @@ npm run build
 
 ```bash
 # 克隆仓库
-git clone https://github.com/buynonsense/ChronoGarden.git
+git clone https://github.com/buynonsense/ChronoGarden-backend.git
 cd ChronoGarden
 
 # 使用Maven构建
@@ -182,7 +182,7 @@ mvn clean package
 如有任何问题或建议，请通过以下方式联系我:
 
 - Email: buytothenonsense@outlook.com
-- GitHub Issues: [提交问题](https://github.com/buynonsense/ChronoGarden/issues)
+- GitHub Issues: [提交问题](https://github.com/buynonsense/ChronoGarden-backend/issues)
 
 ---
 
