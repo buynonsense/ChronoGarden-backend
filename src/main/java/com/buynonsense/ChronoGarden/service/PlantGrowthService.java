@@ -89,6 +89,10 @@ public class PlantGrowthService {
             plant.setIsCompleted(true);
         }
 
+        // 设置 growthDays
+        plant.setGrowthDays((int) growthDays);
+
+        // 保存植物（不覆盖 lastUpdatedTime）
         return plantRepository.save(plant);
     }
 
@@ -203,29 +207,36 @@ public class PlantGrowthService {
 
     // 养护操作：浇水
     public Plant waterPlant(Plant plant) {
-        int newLevel = Math.min(100, plant.getWaterLevel() + 60);
+        int newLevel = Math.min(100, plant.getWaterLevel() + 30);
         plant.setWaterLevel(newLevel);
         return updatePlantGrowthState(plant);
     }
 
     // 养护操作：调整光照
     public Plant adjustLight(Plant plant) {
-        int newLevel = Math.min(100, plant.getLightLevel() + 60);
+        int newLevel = Math.min(100, plant.getLightLevel() + 30);
         plant.setLightLevel(newLevel);
-        return updatePlantGrowthState(plant);
-    }
 
+        LocalDateTime now = LocalDateTime.now();
+        plant.setLastLightAdjustmentTime(now);
+        plant.setLastNormalDecayTime(now);
+
+        // 调试日志：确认保存前的光照值
+        System.out.println("保存前光照值: " + plant.getLightLevel());
+
+        return plantRepository.save(plant);
+    }
     // 养护操作：施肥
     public Plant fertilize(Plant plant) {
-        int newLevel = Math.min(100, plant.getNutrientLevel() + 60);
+        int newLevel = Math.min(100, plant.getNutrientLevel() + 30);
         plant.setNutrientLevel(newLevel);
         return updatePlantGrowthState(plant);
     }
 
     // 养护操作：修剪
     public Plant prunePlant(Plant plant) {
-        plant.setWaterLevel(Math.min(100, plant.getWaterLevel() + 15));
-        plant.setLightLevel(Math.min(100, plant.getLightLevel() + 25));
+        plant.setWaterLevel(Math.min(100, plant.getWaterLevel() + 10));
+        plant.setLightLevel(Math.min(100, plant.getLightLevel() + 15));
         plant.setNutrientLevel(Math.min(100, plant.getNutrientLevel() + 20));
         return updatePlantGrowthState(plant);
     }

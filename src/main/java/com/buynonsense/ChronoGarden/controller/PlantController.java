@@ -190,11 +190,19 @@ public class PlantController {
     public ResponseEntity<?> adjustLight(@PathVariable Long id) {
         return plantRepository.findById(id)
                 .map(plant -> {
-                    if (plant.getIsWithered()) {
+                    if (plant.getIsWithered() || plant.getIsCompleted()) {
                         return ResponseEntity.badRequest().build();
                     }
 
+                    // 调试日志：记录调整前的光照值
+                    System.out.println("调整前光照值: " + plant.getLightLevel());
+
+                    // 调用服务处理阳光操作
                     Plant updatedPlant = plantGrowthService.adjustLight(plant);
+
+                    // 调试日志：记录调整后的光照值
+                    System.out.println("调整后光照值: " + updatedPlant.getLightLevel());
+
                     return ResponseEntity.ok(updatedPlant);
                 })
                 .orElse(ResponseEntity.notFound().build());
@@ -346,7 +354,7 @@ public class PlantController {
      */
     @GetMapping("/user/needing-care")
     public ResponseEntity<List<Map<String, Object>>> getPlantsNeedingCare() {
-        
+
         // 添加调试日志查看方法是否被调用
         System.out.println("访问了 getPlantsNeedingCare 方法");
 
